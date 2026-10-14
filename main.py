@@ -65,30 +65,33 @@ async def song(update: Update, context):
     msg = await update.message.reply_text(f"🔍 '{query}' dhundh raha hu...")
 
     try:
-        result = subprocess.run(
-            ["yt-dlp", f"ytsearch1:{query}", "--get-url", "--no-warnings", "-f", "bestaudio"],
-            capture_output=True, text=True, timeout=60
-        )
+        
         video_url = result.stdout.strip().split("\n")[0]
 
         if not video_url:
             await msg.edit_text("❌ Kuch nahi mila, dusra naam try kar.")
             return
-
+result = subprocess.run(
+    ["yt-dlp", f"ytsearch1:{query}", "--get-url", "--no-warnings", "-f", "bestaudio", "--extractor-args", "youtube:player_client=android"],
+    capture_output=True, text=True, timeout=60
+)
         await msg.edit_text("⬇️ Download kar raha hu, thoda wait kar...")
 
         filename = safe_filename(query)
         output_path = DOWNLOAD_DIR / f"{filename}.mp3"
 
-        subprocess.run(
-            [
-                "yt-dlp",
-                "-x", "--audio-format", "mp3",
-                "--audio-quality", "128K",
-                "-o", str(DOWNLOAD_DIR / f"{filename}.%(ext)s"),
-                video_url,
-                "--no-warnings"
-            ],
+subprocess.run(
+    [
+        "yt-dlp",
+        "-x", "--audio-format", "mp3",
+        "--audio-quality", "128K",
+        "-o", str(DOWNLOAD_DIR / f"{filename}.%(ext)s"),
+        video_url,
+        "--no-warnings",
+        "--extractor-args", "youtube:player_client=android"
+    ],
+    capture_output=True, text=True, timeout=180
+)
             capture_output=True, text=True, timeout=180
         )
 
