@@ -33,11 +33,10 @@ async def start(update: Update, context):
 async def help_cmd(update: Update, context):
     await update.message.reply_text(
         "🎵 Genius Music Bot Help\n\n"
-        "1️⃣ /song <gaana ka naam> - YouTube se gaana download karke bhejta hu\n"
+        "1️⃣ /song <gaana ka naam> - YouTube se gaana\n"
         "2️⃣ /audio - Sample song\n"
-        "3️⃣ /start - Bot start karo\n\n"
-        "Example: /song Tum Hi Ho\n"
-        "Example: /song Shape of You"
+        "3️⃣ /start - Bot start\n\n"
+        "Example: /song Tum Hi Ho"
     )
 
 
@@ -65,33 +64,36 @@ async def song(update: Update, context):
     msg = await update.message.reply_text(f"🔍 '{query}' dhundh raha hu...")
 
     try:
-        
+        result = subprocess.run(
+            [
+                "yt-dlp", f"ytsearch1:{query}",
+                "--get-url", "--no-warnings",
+                "-f", "bestaudio",
+                "--extractor-args", "youtube:player_client=android"
+            ],
+            capture_output=True, text=True, timeout=60
+        )
         video_url = result.stdout.strip().split("\n")[0]
 
         if not video_url:
             await msg.edit_text("❌ Kuch nahi mila, dusra naam try kar.")
             return
-result = subprocess.run(
-    ["yt-dlp", f"ytsearch1:{query}", "--get-url", "--no-warnings", "-f", "bestaudio", "--extractor-args", "youtube:player_client=android"],
-    capture_output=True, text=True, timeout=60
-)
+
         await msg.edit_text("⬇️ Download kar raha hu, thoda wait kar...")
 
         filename = safe_filename(query)
         output_path = DOWNLOAD_DIR / f"{filename}.mp3"
 
-subprocess.run(
-    [
-        "yt-dlp",
-        "-x", "--audio-format", "mp3",
-        "--audio-quality", "128K",
-        "-o", str(DOWNLOAD_DIR / f"{filename}.%(ext)s"),
-        video_url,
-        "--no-warnings",
-        "--extractor-args", "youtube:player_client=android"
-    ],
-    capture_output=True, text=True, timeout=180
-)
+        subprocess.run(
+            [
+                "yt-dlp",
+                "-x", "--audio-format", "mp3",
+                "--audio-quality", "128K",
+                "-o", str(DOWNLOAD_DIR / f"{filename}.%(ext)s"),
+                video_url,
+                "--no-warnings",
+                "--extractor-args", "youtube:player_client=android"
+            ],
             capture_output=True, text=True, timeout=180
         )
 
@@ -105,7 +107,7 @@ subprocess.run(
 
         size_mb = output_path.stat().st_size / (1024 * 1024)
         if size_mb > 49:
-            await msg.edit_text(f"❌ File bahut badi hai ({size_mb:.1f}MB). Chhota gaana try kar.")
+            await msg.edit_text(f"❌ File bahut badi hai ({size_mb:.1f}MB).")
             output_path.unlink(missing_ok=True)
             return
 
